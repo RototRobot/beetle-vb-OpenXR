@@ -28,6 +28,15 @@ The player also includes a desktop mode with a side-by-side view.
 - Ten save-state slots per game.
 - Saved preferences and automatic pause when the app loses focus.
 
+
+<img width="1958" height="724" alt="image" src="https://github.com/user-attachments/assets/d9c6237a-fa92-4a7e-8218-45dc126ee387" />
+
+<img width="1958" height="724" alt="image" src="https://github.com/user-attachments/assets/eae10c7b-cee9-443b-845b-f925a422598b" />
+<img width="1958" height="724" alt="image" src="https://github.com/user-attachments/assets/c134551f-1b68-42f5-bab9-9f91299c7a87" />
+
+
+
+
 ## Requirements
 
 - Windows x64 and a Direct3D 11-capable graphics card.
