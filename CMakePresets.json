@@ -1,0 +1,29 @@
+{
+  "version": 5,
+  "cmakeMinimumRequired": {"major": 3, "minor": 24, "patch": 0},
+  "configurePresets": [
+    {
+      "name": "windows",
+      "displayName": "Windows x64 / Visual Studio 2022",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build/windows",
+      "cacheVariables": {"BUILD_TESTING": "ON", "BVB_BUILD_OPENXR": "ON"}
+    },
+    {
+      "name": "windows-offline",
+      "inherits": "windows",
+      "displayName": "Windows x64 / core and stereo tests (no SDK download)",
+      "binaryDir": "${sourceDir}/build/windows-offline",
+      "cacheVariables": {"BVB_BUILD_OPENXR": "OFF"}
+    }
+  ],
+  "buildPresets": [
+    {"name": "windows", "configurePreset": "windows", "configuration": "Release"},
+    {"name": "windows-offline", "configurePreset": "windows-offline", "configuration": "Release"}
+  ],
+  "testPresets": [
+    {"name": "windows", "configurePreset": "windows", "configuration": "Release", "output": {"outputOnFailure": true}},
+    {"name": "windows-offline", "configurePreset": "windows-offline", "configuration": "Release", "output": {"outputOnFailure": true}}
+  ]
+}
