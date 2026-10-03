@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LaunchBox>
+  <Game><Name>Adventure</Name><Platform>Nintendo Virtual Boy</Platform><DatabaseID>100</DatabaseID><ReleaseDate>1995-08-01</ReleaseDate><Developer>Example &amp; Studio</Developer><Publisher>Example</Publisher><Genres>Action</Genres><Overview>A fictional test game.</Overview></Game>
+  <Game><Name>Adventure</Name><Platform>Other Platform</Platform><DatabaseID>200</DatabaseID></Game>
+  <Game><Name>Space Race</Name><Platform>Nintendo Virtual Boy</Platform><DatabaseID>101</DatabaseID><ReleaseYear>2025</ReleaseYear><ReleaseType>Homebrew</ReleaseType></Game>
+  <GameAlternateName><DatabaseID>100</DatabaseID><AlternateName>Regional Adventure</AlternateName></GameAlternateName>
+  <GameImage><DatabaseID>100</DatabaseID><Type>Box - Front</Type><Region>Japan</Region><FileName>00000000-0000-0000-0000-000000000001.png</FileName></GameImage>
+  <GameImage><DatabaseID>100</DatabaseID><Type>Box - Back</Type><Region>North America</Region><FileName>00000000-0000-0000-0000-000000000002.png</FileName></GameImage>
+  <GameImage><DatabaseID>100</DatabaseID><Type>Box - Front</Type><Region>North America</Region><FileName>00000000-0000-0000-0000-000000000003.png</FileName></GameImage>
+  <GameImage><DatabaseID>101</DatabaseID><Type>Fanart - Box - Front</Type><Region>World</Region><FileName>r2_00000000-0000-0000-0000-000000000004.png</FileName></GameImage>
+  <GameImage><DatabaseID>101</DatabaseID><Type>Box - Front</Type><FileName>../../outside.png</FileName></GameImage>
+</LaunchBox>

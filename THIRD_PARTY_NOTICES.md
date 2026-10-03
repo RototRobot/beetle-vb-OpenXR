@@ -33,3 +33,19 @@ headers. See [COPYING](COPYING). Source provenance is recorded in
 
 The OpenXR loader includes JsonCpp by Baptiste Lepilleur and the JsonCpp Authors,
 under its public-domain/MIT terms. Its license is included in binary packages.
+
+## miniz
+
+The frontend includes miniz 3.1.2 for reading LaunchBox metadata ZIP files.
+miniz is MIT licensed; its copyright notices and license are in
+`third_party/miniz/LICENSE`, with provenance in `third_party/miniz/PROVENANCE.md`.
+Binary packages include the license.
+
+## LaunchBox Games Database
+
+Optional game metadata and cover downloads come from the
+[LaunchBox Games Database](https://gamesdb.launchbox-app.com/). Thanks to
+LaunchBox and its community contributors. Downloaded metadata and artwork are
+separate from the emulator's GPL source; artwork retains its owners' rights.
+Database records and covers are downloaded by users and are not bundled with
+the emulator or its source packages.

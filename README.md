@@ -19,6 +19,8 @@ The player also includes a desktop mode with a side-by-side view.
 - Stereoscopic Virtual Boy emulation with audio and automatic cartridge saves.
 - An in-headset ROM library with a cover-art grid and remembered folders.
 - ROM and cover-art scanning through subfolders.
+- Optional LaunchBox game-data and missing-cover downloads from the headset,
+  with cached data available offline and no account or API key required.
 - VR motion-controller, XInput gamepad, and keyboard controls.
 - Controller remapping through a fourteen-input wizard or individual bindings.
 - Eight color palettes: red, white, blue, cyan, electric cyan, green, magenta,
@@ -51,10 +53,13 @@ For release packages, read `START HERE.txt` for prerequisites and launch steps.
    The library includes games in subfolders and remembers your selection.
 4. Select a game and press the right VR trigger, gamepad A, or Enter to play.
 
-Choose **Cover Folder** to add local PNG, JPEG, or BMP artwork. Match each image's
+Choose **Covers** to add local PNG, JPEG, or BMP artwork. Match each image's
 filename to the ROM's filename, for example `Game Name.vb` and `Game Name.png`.
 Artwork can be organized into subfolders. Select **Rescan** after changing the
-contents of either folder. See the [library guide](docs/LIBRARY.md).
+contents of either folder. Or choose **Find Data**, then **Scan Missing Data**,
+to match games and download missing covers from LaunchBox. The first scan
+downloads about 103 MiB; later scans reuse the cache. Existing local artwork
+takes priority. See the [library guide](docs/LIBRARY.md).
 
 For desktop play, use **Run Virtual Boy Desktop.cmd**. To launch a game directly:
 
@@ -139,6 +144,7 @@ Data is stored beside `beetle_vb_openxr.exe`:
 | --- | --- |
 | `settings.ini` | Display, audio, deadzone, and controller preferences |
 | `library.ini` | Remembered ROM and cover folders |
+| `game-data/` | Cached LaunchBox Virtual Boy metadata and downloaded covers |
 | `saves/` | Cartridge save RAM |
 | `states/` | Save-state slots |
 
@@ -204,6 +210,8 @@ project and are subject to their owners' terms.
   and the foundations this fork builds on:
   [Beetle VB](https://github.com/libretro/beetle-vb-libretro).
 - **Khronos and the OpenXR contributors** for the standard, SDK, and loader.
+- **LaunchBox and its Games Database contributors** for game metadata and
+  cover art, and the **miniz contributors** for the ZIP reader.
 - The **vbjin-ovr contributors** for their earlier work bringing Virtual Boy
   emulation to VR and the inspiration it provides.
 - Everyone who tests the player, reports issues, and contributes improvements.

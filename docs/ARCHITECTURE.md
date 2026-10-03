@@ -52,6 +52,15 @@ root. Inaccessible descendants and Windows reparse points are skipped. ROMs
 retain full paths. Covers match unique exact stems, then unique normalized
 titles. Windows Imaging Component decodes visible covers into a bounded cache.
 
+The optional LaunchBox scan runs on a worker thread. WinHTTP downloads a bounded
+HTTPS metadata ZIP and requested covers from fixed provider hosts. miniz reads
+only `Metadata.xml` into a temporary file; XmlLite prohibits DTDs and streams
+records into a small Virtual Boy catalog. Temporary downloads are removed;
+catalog and cover replacements are atomic. Title and alternate-name matching
+requires a unique normalized match. Local covers take priority. The main thread
+polls progress and refreshes the library after completion without blocking the
+OpenXR render loop. No ROM contents, hashes, or local paths are sent.
+
 Preferences use `settings.ini`; remembered folders use `library.ini`. Cartridge
 saves and state slots are keyed by ROM contents. Save-state envelopes include
 ROM/core identities, bounded payloads, native eye images, and a checksum. A

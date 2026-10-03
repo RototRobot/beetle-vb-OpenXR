@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 #include "settings_menu.h"
+#include "game_data.h"
 #include <map>
 namespace bvb {
 inline constexpr unsigned library_scale = 4;
@@ -11,8 +12,8 @@ struct LibraryConfig { std::filesystem::path rom_directory, art_directory; };
 LibraryConfig load_library_config(const std::filesystem::path& file);
 void save_library_config(const std::filesystem::path& file, const LibraryConfig& config);
 std::string library_title(const std::filesystem::path& file);
-struct LibraryGame { std::filesystem::path rom, cover; std::string title; };
-std::vector<LibraryGame> scan_library(const LibraryConfig& config);
+struct LibraryGame { std::filesystem::path rom, cover; std::string title, details; };
+std::vector<LibraryGame> scan_library(const LibraryConfig& config, const std::filesystem::path& cache = {});
 struct CoverImage { unsigned width = 0, height = 0; std::vector<std::uint8_t> pixels; };
 // WIC decodes/scales locally supplied PNG/JPEG/BMP art; no network access.
 CoverImage load_cover_image(const std::filesystem::path& file, unsigned width, unsigned height);
@@ -21,12 +22,15 @@ class LibraryMenu {
 public:
     LibraryConfig config;
     std::vector<LibraryGame> games;
-    bool browsing = false, toolbar = true;
+    bool browsing = false, toolbar = true, data_open = false;
+    int data_selected = 0;
     int selected = 0, tool = 0, folder_selected = 0;
     std::filesystem::path folder;
     std::string status = "CHOOSE A ROM FOLDER TO GET STARTED";
     std::uint64_t revision = 0;
-    void initialize(LibraryConfig value, const std::filesystem::path& suggested_folder);
+    void initialize(LibraryConfig value, const std::filesystem::path& suggested_folder,
+                    const std::filesystem::path& data_cache = {});
+    void poll_data_scan();
     void refresh();
     void begin_browse(bool artwork = false);
     void reset_input(); // Require neutral controls on entering or returning from gameplay.
@@ -36,6 +40,10 @@ private:
     MenuInput previous;
     bool armed = false, art_browser = false;
     std::filesystem::path suggestion;
+    std::filesystem::path data_cache;
+    GameDataScan data_scan;
+    std::string data_status;
+    bool data_was_running = false;
     std::vector<std::filesystem::path> folders;
     std::map<std::filesystem::path,CoverImage> covers;
     void list_folders();

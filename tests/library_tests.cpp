@@ -128,7 +128,10 @@ int main(int argc,char** argv) {
         menu.folder_selected=0; require(!press(menu,accept).config_changed,"Computer/drives was accepted as a ROM folder");
         menu.begin_browse(true); menu.folder_selected=0;
         require(press(menu,accept).config_changed && menu.config.art_directory==art,"Cover folder choice not accepted");
-        menu.browsing=false; menu.toolbar=true; menu.tool=3; require(press(menu,accept).exit,"Library exit action missing");
+        menu.browsing=false; menu.toolbar=true; menu.tool=2;
+        press(menu,accept); require(menu.data_open,"Find Data did not open");
+        press(menu,back); require(!menu.data_open && menu.toolbar,"Find Data did not return to toolbar");
+        menu.tool=4; require(press(menu,accept).exit,"Library exit action missing");
 
         for(int i=0;i<7;++i) write(roms/("Game "+std::to_string(i)+".vboy"));
         bitmap(art/"Game 0.bmp",512,456,true);
@@ -158,6 +161,9 @@ int main(int argc,char** argv) {
         export_frame(fs::u8path(argv[1])/"library-grid-page2-test.bmp",rendered);
         menu.selected=0; export_frame(fs::u8path(argv[1])/"library-grid-test.bmp",menu.render());
         menu.begin_browse(); export_frame(fs::u8path(argv[1])/"library-folders-test.bmp",menu.render());
+        menu.browsing=false; menu.data_open=true;
+        export_frame(fs::u8path(argv[1])/"library-game-data-test.bmp",menu.render());
+        menu.data_open=false;
         menu.initialize({temp.path/"missing",art},roms);
         require(menu.games.empty() && menu.toolbar,"Unavailable default did not offer folder recovery");
         menu.render();

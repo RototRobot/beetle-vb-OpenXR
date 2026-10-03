@@ -76,6 +76,7 @@ def main():
         entries['licenses/OpenXR-' + filename] = (sdk / 'LICENSES' / filename).read_bytes()
     entries['licenses/OpenXR-COPYING.adoc'] = (sdk / 'COPYING.adoc').read_bytes()
     entries['licenses/JsonCpp-LICENSE.txt'] = (sdk / 'src/external/jsoncpp/LICENSE').read_bytes()
+    entries['licenses/miniz-LICENSE.txt'] = (root / 'third_party/miniz/LICENSE').read_bytes()
     copyrights = set()
     for folder in ['src/loader', 'src/common', 'include/openxr']:
         for path in (sdk / folder).rglob('*'):

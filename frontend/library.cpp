@@ -91,7 +91,7 @@ void save_library_config(const fs::path& file,const LibraryConfig& config) {
     const auto text=output.str(); write_atomic_file(file,text.data(),text.size());
 }
 std::string library_title(const fs::path& file) {return display(without_tags(file.stem().u8string()));}
-std::vector<LibraryGame> scan_library(const LibraryConfig& config) {
+std::vector<LibraryGame> scan_library(const LibraryConfig& config,const fs::path& cache) {
     const auto roms=files(config.rom_directory,false);
     std::vector<fs::path> art;
     // Unavailable art must never hide otherwise usable games.
@@ -99,8 +99,10 @@ std::vector<LibraryGame> scan_library(const LibraryConfig& config) {
     std::map<std::string,std::vector<fs::path>> exact,titles;
     for(const auto& image:art) { exact[lower(image.stem().u8string())].push_back(image); titles[title_key(image)].push_back(image); }
     std::vector<LibraryGame> result;
+    GameCatalog catalog;
+    if(!cache.empty()) {try {catalog=load_game_catalog(cache/"virtual-boy.txt");} catch(const std::exception&) {}}
     for(const auto& rom:roms) {
-        LibraryGame entry{rom,{},library_title(rom)};
+        LibraryGame entry{rom,{},library_title(rom),{}};
         const auto matched=exact.find(lower(rom.stem().u8string()));
         if(matched!=exact.end() && matched->second.size()==1) entry.cover=matched->second.front();
         else {
@@ -108,18 +110,33 @@ std::vector<LibraryGame> scan_library(const LibraryConfig& config) {
             const auto title=titles.find(key);
             if(!key.empty() && title!=titles.end() && title->second.size()==1) entry.cover=title->second.front();
         }
+        if(const auto* data=match_game_data(catalog,rom)) {
+            entry.title=display(data->title);
+            entry.details=display(data->year+"  "+data->developer+"  "+data->genre);
+            if(entry.cover.empty() && valid_game_image(data->image)) {
+                const auto downloaded=cache/"covers"/fs::u8path(data->image);
+                std::error_code error;
+                if(fs::is_regular_file(downloaded,error)) entry.cover=downloaded;
+            }
+        }
         result.push_back(std::move(entry));
     }
     return result;
 }
-void LibraryMenu::initialize(LibraryConfig value,const fs::path& suggested_folder) {
-    config=std::move(value); suggestion=suggested_folder; refresh(); toolbar=games.empty(); reset_input();
+void LibraryMenu::initialize(LibraryConfig value,const fs::path& suggested_folder,const fs::path& cache) {
+    config=std::move(value); suggestion=suggested_folder; data_cache=cache; refresh(); toolbar=games.empty(); reset_input();
+}
+void LibraryMenu::poll_data_scan() {
+    const auto scan=data_scan.status();
+    if(scan.message!=data_status) {data_status=scan.message; ++revision;}
+    if(data_was_running && scan.finished) refresh();
+    data_was_running=scan.running;
 }
 void LibraryMenu::refresh() {
     ++revision;
     covers.clear();
     try {
-        games=scan_library(config); selected=std::clamp(selected,0,std::max(0,int(games.size())-1));
+        games=scan_library(config,data_cache); selected=std::clamp(selected,0,std::max(0,int(games.size())-1));
         status=config.rom_directory.empty()?"CHOOSE A ROM FOLDER TO GET STARTED"
             :games.empty()?"NO ROMS FOUND - CHOOSE FOLDER OR RESCAN":"SELECT A GAME AND PRESS RIGHT TRIGGER";
     } catch(const std::exception& e) {games.clear(); selected=0; status="FOLDER UNAVAILABLE - CHOOSE ANOTHER"; std::cerr<<"Library: "<<e.what()<<'\n';}
@@ -162,7 +179,25 @@ LibraryActions LibraryMenu::update(const MenuInput& input) {
     const bool back=(input.back && !previous.back) || (input.toggle && !previous.toggle);
     previous=input;
     if(up || down || left || right || accept || back) ++revision;
-    if(browsing) {
+    if(data_open) {
+        const auto scan=data_scan.status();
+        if(scan.running) {
+            if(back || accept) {data_scan.cancel(); data_status="CANCELLING SCAN";}
+        } else {
+            if(up) data_selected=(data_selected+2)%3;
+            if(down) data_selected=(data_selected+1)%3;
+            if(back || (accept && data_selected==2)) {data_open=false; reset_input();}
+            else if(accept && !up && !down && !left && !right) {
+                if(games.empty()) data_status="CHOOSE A ROM FOLDER WITH GAMES FIRST";
+                else if(data_cache.empty()) data_status="GAME DATA CACHE IS UNAVAILABLE";
+                else {
+                    std::vector<DataScanGame> inputs;
+                    for(const auto& game:games) inputs.push_back({game.rom,!game.cover.empty()});
+                    data_scan.start(data_cache,std::move(inputs),data_selected==1); data_was_running=true;
+                }
+            }
+        }
+    } else if(browsing) {
         const int count=int(folders.size())+3;
         if(up) folder_selected=(folder_selected+count-1)%count;
         if(down) folder_selected=(folder_selected+1)%count;
@@ -184,12 +219,13 @@ LibraryActions LibraryMenu::update(const MenuInput& input) {
             else {folder=folders[folder_selected-3]; folder_selected=0; list_folders();}
         }
     } else if(toolbar) {
-        if(left && !up && !down) tool=(tool+3)%4;
-        if(right && !up && !down) tool=(tool+1)%4;
+        if(left && !up && !down) tool=(tool+4)%5;
+        if(right && !up && !down) tool=(tool+1)%5;
         if(down && !games.empty()) toolbar=false;
         if(accept && !back && !up && !down && !left && !right) {
             if(tool<2) begin_browse(tool==1);
-            else if(tool==2) refresh();
+            else if(tool==2) {data_open=true; data_selected=0; reset_input();}
+            else if(tool==3) refresh();
             else result.exit=true;
         }
     } else {
@@ -213,8 +249,28 @@ StereoFrame LibraryMenu::render() {
     };
     rectangle(frame.left,0,0,eye_width,eye_height,{12,18,26});
     text(frame.left,14,9,"VIRTUAL BOY",{235,242,255},2);
-    text(frame.left,browsing?14:204,browsing?28:14,browsing?(art_browser?"CHOOSE COVER FOLDER":"CHOOSE ROM FOLDER"):"GAME LIBRARY",{135,160,185});
-    if(browsing) {
+    text(frame.left,browsing?14:204,browsing?28:14,browsing?(art_browser?"CHOOSE COVER FOLDER":"CHOOSE ROM FOLDER"):data_open?"FIND GAME DATA":"GAME LIBRARY",{135,160,185});
+    if(data_open) {
+        const auto scan=data_scan.status();
+        text(frame.left,14,43,"GAME DATA AND COVERS FROM LAUNCHBOX",{215,225,235});
+        text(frame.left,14,58,"FIRST SCAN DOWNLOADS THE FULL DATABASE.",{135,160,185});
+        text(frame.left,14,70,"ABOUT 103 MIB - ALLOW 650 MIB FREE SPACE.",{135,160,185});
+        text(frame.left,14,82,"LATER SCANS USE A SMALL VIRTUAL BOY CACHE.",{135,160,185});
+        text(frame.left,14,94,"EXISTING ARTWORK IS KEPT. ROMS STAY LOCAL.",{135,160,185});
+        if(!scan.running) {
+            const char* labels[]={"SCAN MISSING DATA","UPDATE DATABASE AND SCAN","BACK"};
+            for(int i=0;i<3;++i) {
+                const int y=115+i*19;
+                if(data_selected==i) rectangle(frame.left,10,y-3,364,16,{27,69,91});
+                text(frame.left,18,y,labels[i],data_selected==i?ui::Color{128,238,255}:ui::Color{215,225,235});
+            }
+        } else {
+            rectangle(frame.left,10,126,364,20,{27,69,91});
+            text(frame.left,18,132,"CANCEL SCAN",{128,238,255});
+        }
+        if(!games.empty()) text(frame.left,14,177,games[selected].details.substr(0,59),{135,160,185});
+        text(frame.left,14,194,"NO ACCOUNT OR API KEY REQUIRED",{135,160,185});
+    } else if(browsing) {
         auto path=display(folder.empty()?"COMPUTER / DRIVES":folder.u8string());
         if(path.size()>58) path="..."+path.substr(path.size()-55);
         text(frame.left,14,43,path,{128,238,255});
@@ -226,10 +282,10 @@ StereoFrame LibraryMenu::render() {
             text(frame.left,18,y,label.substr(0,57),{215,225,235});
         }
     } else {
-        const char* tools[]={"ROM FOLDER","COVER FOLDER","RESCAN","EXIT"};
-        for(int i=0;i<4;++i) {
-            const int x=10+i*93;
-            rectangle(frame.left,x,29,90,12,toolbar && tool==i?ui::Color{27,69,91}:ui::Color{21,31,43});
+        const char* tools[]={"ROM FOLDER","COVERS","FIND DATA","RESCAN","EXIT"};
+        for(int i=0;i<5;++i) {
+            const int x=10+i*74;
+            rectangle(frame.left,x,29,71,12,toolbar && tool==i?ui::Color{27,69,91}:ui::Color{21,31,43});
             text(frame.left,x+3,32,tools[i],toolbar && tool==i?ui::Color{128,238,255}:ui::Color{180,200,220});
         }
         const int page=selected/6*6;
@@ -264,8 +320,8 @@ StereoFrame LibraryMenu::render() {
         if(games.empty()) {text(frame.left,38,91,"YOUR VIRTUAL BOY LIBRARY",{215,225,235}); text(frame.left,38,110,"SELECT ROM FOLDER ABOVE",{128,238,255});}
         else text(frame.left,14,194,(games[selected].title+"  "+std::to_string(selected+1)+"/"+std::to_string(games.size())).substr(0,59),{215,225,235});
     }
-    text(frame.left,14,204,status.substr(0,59),{128,238,255});
-    text(frame.left,14,214,browsing?"PAD MOVE  R-TRIGGER CHOOSE  L-TRIGGER CANCEL":"PAD MOVE  R-TRIGGER PLAY  L-TRIGGER TOOLBAR",{135,160,185});
+    text(frame.left,14,204,(data_open?data_status:status).substr(0,59),{128,238,255});
+    text(frame.left,14,214,data_open?"PAD MOVE  R-TRIGGER SELECT  L-TRIGGER BACK":browsing?"PAD MOVE  R-TRIGGER CHOOSE  L-TRIGGER CANCEL":"PAD MOVE  R-TRIGGER PLAY  L-TRIGGER TOOLBAR",{135,160,185});
     frame.right=frame.left; return frame;
 }
 }

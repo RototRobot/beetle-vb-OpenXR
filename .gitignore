@@ -24,6 +24,7 @@ __pycache__/
 /library.ini
 library.ini.tmp-*
 /boxart/
+/game-data/
 settings.ini.tmp-*
 build/**/settings.ini
 

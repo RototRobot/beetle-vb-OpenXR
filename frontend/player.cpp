@@ -227,7 +227,7 @@ int wmain(int argc, wchar_t** argv) {
         bvb::LibraryMenu library;
         auto suggestion=options.headless?fs::path{}:suggested_folder(L"Roms");
         if(suggestion.empty() && !options.headless) suggestion=fs::current_path();
-        library.initialize(config,suggestion);
+        library.initialize(config,suggestion,options.library_file.parent_path()/"game-data");
         if(!options.export_library.empty()) {
             library.toolbar=library.games.empty(); export_frame(options.export_library,library.render()); return 0;
         }
@@ -353,6 +353,7 @@ int wmain(int argc, wchar_t** argv) {
             bvb::MenuActions actions;
             bool state_loaded = false, scene_changed = false;
             if(in_library) {
+                library.poll_data_scan();
                 if(focused) {
                     const auto request=library.update(navigation);
                     if(request.config_changed) persist_library();

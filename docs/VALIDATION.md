@@ -69,6 +69,7 @@ ctest --preset windows
 ```
 
 The automated suite covers stereo buffers, core loading, generated cartridge
-execution, input, remapping, save states, settings, and library behavior. Tests
+execution, input, remapping, save states, settings, library behavior, and game
+data import, matching, cache reuse, download failures, and cancellation. Tests
 use generated fixtures and do not require game files or a headset. Physical
 headset behavior is checked separately with the stereo diagnostic and gameplay.
